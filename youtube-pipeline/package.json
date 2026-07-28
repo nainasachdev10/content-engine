@@ -1,0 +1,29 @@
+{
+  "name": "youtube-pipeline",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "research": "tsx src/research.ts",
+    "script": "tsx src/script.ts",
+    "voiceover": "tsx src/voiceover.ts",
+    "visuals": "tsx src/visuals.ts",
+    "render": "tsx src/render/render.ts",
+    "render-hf": "tsx src/render/render-hf.ts",
+    "captions": "tsx src/captions.ts",
+    "thumbnail": "tsx src/thumbnail.ts",
+    "metadata": "tsx src/metadata.ts",
+    "validate": "tsx src/validate.ts",
+    "upload": "tsx src/upload.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.110.0",
+    "dotenv": "^16.4.5",
+    "googleapis": "^144.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  }
+}
