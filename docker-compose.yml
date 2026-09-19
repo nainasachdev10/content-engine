@@ -1,0 +1,13 @@
+services:
+  engine:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "3777:3777"
+    env_file: .env          # shared keys (Anthropic, ElevenLabs, Replicate, YouTube client, notifications)
+    environment:
+      HYPERFRAMES_BIN: hyperframes
+    volumes:
+      - ./projects:/app/projects   # per-channel config, secrets, generated videos
+      - ./data:/app/data           # run database + logs
+    shm_size: "1gb"                # Chromium (HyperFrames renderer) needs shared memory

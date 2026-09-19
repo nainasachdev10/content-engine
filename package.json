@@ -1,0 +1,22 @@
+{
+  "name": "content-engine",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "engine": "tsx packages/pipeline/src/cli.ts",
+    "dashboard": "npm run dev -w @engine/dashboard",
+    "build": "npm run build -w @engine/dashboard",
+    "start": "node scripts/start.mjs",
+    "scheduler": "tsx packages/pipeline/src/cli.ts scheduler",
+    "typecheck": "tsc -p packages/pipeline --noEmit"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  }
+}

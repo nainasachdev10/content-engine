@@ -1,8 +1,0 @@
-node_modules/
-dist/
-output/
-.env
-.DS_Store
-# Installed third-party agent skills (reinstall with: npx skills add heygen-com/hyperframes)
-.agents/
-.claude/

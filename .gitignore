@@ -1,0 +1,19 @@
+node_modules/
+dist/
+.env
+.DS_Store
+
+# Run-tracking database
+data/
+
+# Per-project secrets and generated media (state/ and config.json ARE tracked)
+projects/*/.env
+projects/*/output/
+# Notion hub/database ids (per client workspace, not portable)
+projects/*/notion.json
+# 6h cache of the client's Notion hub page text
+projects/*/state/hub-cache.txt
+
+# Installed third-party agent skills (reinstall with: npx skills add heygen-com/hyperframes)
+.agents/
+.claude/

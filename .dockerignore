@@ -1,0 +1,11 @@
+node_modules
+apps/dashboard/.next
+data
+projects/*/output
+projects/*/.env
+projects/*/notion.json
+.env
+.git
+.agents
+.claude
+apps/dashboard/.env

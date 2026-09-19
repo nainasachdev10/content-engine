@@ -1,0 +1,53 @@
+{
+  "name": "Ocean Curiosities",
+  "niche": "ocean science facts for curious adults — deep-sea discoveries, marine biology, and how the ocean shapes our planet",
+  "language": "en",
+  "video": {
+    "lengthMinutes": 1,
+    "visualsMode": "slideshow",
+    "heroScenes": "auto",
+    "renderer": "ffmpeg",
+    "formats": ["story", "mystery", "countdown", "versus", "journey", "mythbusting", "how-it-works", "what-if"]
+  },
+  "voice": {
+    "provider": "elevenlabs",
+    "voiceId": "Xb7hH8MSUJpSbSDYk0k2",
+    "modelId": "eleven_multilingual_v2",
+    "settings": { "stability": 0.4, "similarity_boost": 0.75, "style": 0.3 }
+  },
+  "music": {
+    "enabled": true,
+    "prompt": "calm deep ambient underwater soundscape, soft evolving synth pads, subtle low pulse, mysterious and serene, unobtrusive background for narration, no vocals",
+    "gainDb": -21
+  },
+  "audience": {
+    "madeForKids": false,
+    "description": "a general audience curious about this topic"
+  },
+  "prompts": {
+    "scriptRules": "RETENTION (keep them watching):\n- SCENE 1 (the hook): open cold with the single most fascinating fact or question of the whole video in the FIRST sentence — no greetings, no \"today we'll learn about\". Then promise a payoff.\n- CURIOSITY LOOPS: open a question early that only gets answered near the end, and remind viewers it's coming.\n- RE-HOOKS: every 3-4 scenes, drop a pattern interrupt — \"but here's the interesting part\" or a direct question to the viewer.\n- ENDING: deliver the payoff of the opening question, then tease a follow-up question, plus a quick like/subscribe ask.\nQUALITY:\n- HONESTY: no sensationalism, exaggeration, or misleading claims. Every fact must be genuinely true.\n- LANGUAGE: short clear sentences, vivid concrete comparisons, no unexplained jargon.",
+    "visualStyle": "High-quality cinematic digital illustration with rich lighting and dynamic composition — action mid-motion, interesting camera angles, not static portraits.",
+    "thumbnailStyle": "Bold, high-contrast YouTube thumbnail composition: the video's most striking subject large in the right two-thirds with soft glowing rim lighting, vibrant complementary colors, simple uncluttered background, and a clearly darker empty area covering the left third reserved for text. Honest — never misleading shock imagery.",
+    "metadataGuidance": "Metadata must be honest and accurate: title under 70 chars, curiosity-driven but never clickbait or ALL-CAPS hype; description 2-3 paragraphs with the hook in the first 2 lines, ending with 3-5 relevant hashtags; 15-25 genuinely relevant tags with no keyword stuffing.",
+    "validationChecklist": "1. Sensationalism, shock-bait, exaggerated or misleading claims (in narration, title, description, OR thumbnail)\n2. Clickbait mismatch: thumbnail/title promising something the video doesn't deliver\n3. Low-quality/inauthentic signals: keyword stuffing, repetitive filler, no genuine value to the viewer\n4. Factual claims that are wrong or unverifiable"
+  },
+  "captionTheme": {
+    "fontSize": 58,
+    "fontFamily": "\"Arial Rounded MT Bold\", \"Helvetica Rounded\", Arial, sans-serif"
+  },
+  "youtube": {
+    "categoryId": "27",
+    "defaultPrivacy": "unlisted",
+    "channelUrl": ""
+  },
+  "schedule": {
+    "cadencePerWeek": 3,
+    "autoRun": false
+  },
+  "models": {
+    "research": "claude-opus-4-8",
+    "script": "claude-opus-4-8",
+    "metadata": "claude-opus-4-8",
+    "validate": "claude-sonnet-5"
+  }
+}

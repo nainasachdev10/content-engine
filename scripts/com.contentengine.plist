@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  macOS launchd service: keeps the dashboard + scheduler running at login and restarts them if they die.
+  Install (edit the two paths first if the repo lives elsewhere):
+    cp scripts/com.contentengine.plist ~/Library/LaunchAgents/
+    launchctl load -w ~/Library/LaunchAgents/com.contentengine.plist
+  Stop:  launchctl unload -w ~/Library/LaunchAgents/com.contentengine.plist
+  Logs:  data/logs/service.log
+-->
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>com.contentengine</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/zsh</string>
+    <string>-lc</string>
+    <string>cd /Users/naina/Youtube-agent && npm run build >/dev/null 2>&1; exec npm start</string>
+  </array>
+  <key>WorkingDirectory</key><string>/Users/naina/Youtube-agent</string>
+  <key>RunAtLoad</key><true/>
+  <key>KeepAlive</key><true/>
+  <key>StandardOutPath</key><string>/Users/naina/Youtube-agent/data/logs/service.log</string>
+  <key>StandardErrorPath</key><string>/Users/naina/Youtube-agent/data/logs/service.log</string>
+</dict>
+</plist>

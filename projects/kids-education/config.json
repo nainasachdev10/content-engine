@@ -1,0 +1,53 @@
+{
+  "name": "Kids Education",
+  "niche": "kids educational content — fascinating, age-appropriate facts spanning history, science, nature, space, and the natural world",
+  "language": "en",
+  "video": {
+    "lengthMinutes": 5,
+    "visualsMode": "hybrid",
+    "heroScenes": "auto",
+    "renderer": "hyperframes",
+    "formats": ["story", "mystery", "countdown", "journey", "how-it-works", "what-if"]
+  },
+  "voice": {
+    "provider": "elevenlabs",
+    "voiceId": "Xb7hH8MSUJpSbSDYk0k2",
+    "modelId": "eleven_multilingual_v2",
+    "settings": { "stability": 0.38, "similarity_boost": 0.75, "style": 0.35 }
+  },
+  "music": {
+    "enabled": true,
+    "prompt": "playful light orchestral background bed for a kids educational video, warm marimba, pizzicato strings and soft glockenspiel, gentle sense of wonder and curiosity, unobtrusive, steady, no vocals",
+    "gainDb": -22
+  },
+  "audience": {
+    "madeForKids": true,
+    "description": "kids aged 6-10 (channel must satisfy BOTH high watch-time retention AND YouTube Kids quality/monetization policy)"
+  },
+  "prompts": {
+    "scriptRules": "RETENTION (keep them watching):\n- SCENE 1 (the hook): open cold with the single most fascinating fact or question of the whole video in the FIRST sentence — no greetings, no \"today we'll learn about\". Then promise a payoff (\"stick around, because the answer is amazing\").\n- CURIOSITY LOOPS: open a question early that only gets answered near the end, and remind viewers it's coming (\"remember those mysterious spots? We're getting close...\").\n- RE-HOOKS: every 3-4 scenes, drop a wonder-based pattern interrupt — \"but here's the coolest part\", \"and this is where it gets really interesting\", or a direct question to the viewer.\n- INTERACTIVE MOMENTS: 1-2 places where the narrator asks kids to guess, count, or shout an answer at the screen before revealing it.\n- ENDING: deliver the payoff of the opening question, then end with an open question that teases the next video, plus a quick like/subscribe ask.\n\nKIDS-POLICY SAFETY (violating any of these risks demonetization):\n- TONE: calm-but-enthusiastic, warm, and encouraging. Curiosity and wonder — never shock, fear, dread, or anxiety. No frightening, violent, gross, or unsettling framing, even for dramatic topics.\n- HONESTY: no sensationalism, exaggeration, or misleading claims. Every fact must be genuinely true and educational — a parent watching along should think \"my kid is actually learning something\".\n- LANGUAGE: short clear sentences, vivid comparisons kids know (school buses, swimming pools, playgrounds), zero jargon without an instant fun explanation.",
+    "visualStyle": "Vibrant, high-quality 3D-animated family-film style (Pixar/Disney-like): rounded friendly shapes, warm cinematic lighting, and characters with natural, positive expressions (curious, delighted, amazed — never scared or distressed).",
+    "thumbnailStyle": "A cute 3D-animated family-film-style character (Pixar-like) positioned in the right two-thirds (rule of thirds), with a warm, joyful expression of genuine wonder — bright smile, sparkling curious eyes, gesturing toward the fascinating subject of the video beside them. The subject pops with soft glowing rim lighting. Vibrant saturated colors with strong complementary contrast (orange/teal or purple/yellow), simple clean uncluttered background, and a clearly darker, empty area covering the left third reserved for text. Friendly, inviting, and honest — never scary, shocked, or exaggerated.",
+    "metadataGuidance": "This is a kids' educational channel (made-for-kids, monetized), so metadata must be honest and parent-friendly:\n- title: under 70 chars, curiosity-driven but completely accurate — a real question or fact, never clickbait, shock words, or ALL-CAPS hype\n- description: 2-3 paragraphs written so a PARENT deciding what their kid watches trusts it; first 2 lines carry the hook (they show above the fold), plainly state what the child will learn, end with 3-5 relevant hashtags\n- tags: 15-25 genuinely relevant tags, mix of broad and specific — no keyword stuffing or trending-but-unrelated terms",
+    "validationChecklist": "1. Frightening, violent, gross, or anxiety-inducing content or imagery\n2. Sensationalism, shock-bait, exaggerated or misleading claims (in narration, title, description, OR thumbnail text)\n3. Clickbait mismatch: thumbnail/title promising something the video doesn't deliver\n4. Low-quality/inauthentic signals: keyword stuffing, repetitive filler, no genuine educational value\n5. Age-inappropriate themes or language for 6-10 year olds"
+  },
+  "captionTheme": {
+    "fontSize": 58,
+    "fontFamily": "\"Arial Rounded MT Bold\", \"Helvetica Rounded\", Arial, sans-serif"
+  },
+  "youtube": {
+    "categoryId": "27",
+    "defaultPrivacy": "unlisted",
+    "channelUrl": ""
+  },
+  "schedule": {
+    "cadencePerWeek": 7,
+    "autoRun": false
+  },
+  "models": {
+    "research": "claude-opus-4-8",
+    "script": "claude-opus-4-8",
+    "metadata": "claude-opus-4-8",
+    "validate": "claude-sonnet-5"
+  }
+}
