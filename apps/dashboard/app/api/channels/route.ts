@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { execEngine, readConfig, writeConfig, repoRoot } from "../../../lib/engine";
+import { execEngine, readConfig, writeConfig, repoRoot, keyValue } from "../../../lib/engine";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 
@@ -60,7 +60,7 @@ async function tailorPrompts(input: {
   tone?: string;
   current: Record<string, string>;
 }): Promise<{ niche?: string; prompts: Record<string, string>; music?: string; formats?: string[] }> {
-  const key = process.env.ANTHROPIC_API_KEY;
+  const key = keyValue("ANTHROPIC_API_KEY");
   if (!key) throw new Error("ANTHROPIC_API_KEY missing");
   const prompt = `You are configuring an automated YouTube channel. Write the production prompts for it.
 

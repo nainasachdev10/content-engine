@@ -51,6 +51,12 @@ export default function SettingsPage() {
       </div>
 
       <div className="card">
+        <h3>Connections</h3>
+        <p className="muted" style={{ margin: "0 0 10px" }}>The AI and notification accounts your videos are made with.</p>
+        <a className="btn ghost" href="/settings/connections">Manage connections</a>
+      </div>
+
+      <div className="card">
         <h3>Channels</h3>
         {projects.map((p) => (
           <div key={p.slug} className="row" style={{ justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid var(--border)" }}>

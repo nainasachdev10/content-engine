@@ -5,11 +5,23 @@
 import { config as loadDotenv } from "dotenv";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
+import { existsSync, readFileSync } from "node:fs";
 
 // packages/pipeline/src/lib → repo root is four levels up.
 export const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "..");
 
 loadDotenv({ path: join(repoRoot, ".env") });
+
+// Keys entered in the dashboard (data/connections.json) win over host env.
+try {
+  const p = join(repoRoot, "data", "connections.json");
+  if (existsSync(p)) {
+    const c = JSON.parse(readFileSync(p, "utf8")) as Record<string, string>;
+    for (const [k, v] of Object.entries(c)) if (v) process.env[k] = v;
+  }
+} catch {
+  /* unreadable connections file — host env applies */
+}
 
 export const secrets = {
   anthropicApiKey: process.env.ANTHROPIC_API_KEY ?? "",
@@ -31,7 +43,7 @@ export function requireSecrets(...keys: (keyof typeof secrets)[]): void {
   const missing = keys.filter((k) => !secrets[k]);
   if (missing.length > 0) {
     throw new Error(
-      `Missing required .env value(s): ${missing.join(", ")}. Fill them in ${join(repoRoot, ".env")}.`
+      `Missing key(s): ${missing.join(", ")}. Add them in the dashboard under Settings → Connections (or the host .env).`
     );
   }
 }

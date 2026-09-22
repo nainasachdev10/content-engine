@@ -71,7 +71,7 @@ because renders are bursty and it bills actual usage; on Render you need the Pro
 **Railway**
 1. New project → Deploy from GitHub repo (it detects the Dockerfile).
 2. Settings → Volumes → add a volume mounted at `/app/storage`.
-3. Variables: everything from section 3 **plus** `STORAGE_DIR=/app/storage` and
+3. Variables: the infrastructure set from section 3 with `STORAGE_DIR=/app/storage` and
    `DASHBOARD_URL=https://<service>.up.railway.app` (or your custom domain). Leave
    `FFMPEG_PATH` unset.
 4. Settings → Resources: allow at least 4 GB RAM (8 GB for talking-head/HyperFrames-heavy channels).
@@ -85,24 +85,27 @@ because renders are bursty and it bills actual usage; on Render you need the Pro
 video from local disk and spawns the engine as child processes, none of which serverless
 hosting allows. Keep the dashboard in the same container — it costs nothing extra.
 
-## 3. `.env` for the client
+## 3. Host variables (infrastructure only)
 
 ```
-ANTHROPIC_API_KEY=…
-ELEVENLABS_API_KEY=…
-IMAGE_API_KEY=…                 # Replicate
-YOUTUBE_CLIENT_ID=…
+YOUTUBE_CLIENT_ID=…             # YOUR Google app (one per deployment, not per client)
 YOUTUBE_CLIENT_SECRET=…
 DASHBOARD_PASSWORD=<what you give the client>
 DASHBOARD_SESSION_SECRET=<openssl rand -hex 32>
 DASHBOARD_URL=https://engine.acme-client.com
-RESEND_API_KEY=…                # optional, email notifications
-NOTIFY_EMAIL_TO=client@example.com
-VAPID_PUBLIC_KEY=…              # docker compose run --rm engine npm run engine -- push-keys
+VAPID_PUBLIC_KEY=…              # npm run engine -- push-keys
 VAPID_PRIVATE_KEY=…
 VAPID_SUBJECT=mailto:you@example.com
+STORAGE_DIR=/app/storage        # hosted platforms with one volume
 ```
 `FFMPEG_PATH` and the browser path are set inside the image — don't set them.
+
+**AI and notification keys are NOT host variables.** The client enters their own
+Anthropic, ElevenLabs, Replicate and (optionally) Resend keys in the dashboard under
+**Settings → Connections** (the setup wizard asks for them first). They're stored on the
+volume and override anything on the host. If *you* pay for usage instead, you may set
+`ANTHROPIC_API_KEY`, `ELEVENLABS_API_KEY`, `IMAGE_API_KEY`, `RESEND_API_KEY`,
+`NOTIFY_EMAIL_TO` on the host and the client never sees a key.
 
 Check it's up: open the URL, sign in, you should land on the setup wizard.
 

@@ -6,11 +6,14 @@ on your computer and your phone. Nothing is ever published to YouTube until you 
 ## First visit (about 5 minutes)
 
 1. **Sign in** with the password you were given.
-2. **Describe your channel.** A couple of sentences about what it's about, who watches,
+2. **Connect your accounts.** Paste your Anthropic, ElevenLabs and Replicate keys (each
+   has a "Get a key" link). These are the accounts your videos are billed to; they stay
+   on your engine and are never shown again.
+3. **Describe your channel.** A couple of sentences about what it's about, who watches,
    and the tone you want. The engine writes its own style guide from this.
-3. **Connect YouTube.** Sign in with the Google account that owns the channel and click
+4. **Connect YouTube.** Sign in with the Google account that owns the channel and click
    *Allow*. This only lets the engine publish videos *after you approve them*.
-4. **Turn on notifications.** Click *Enable on this device*. On iPhone, first tap
+5. **Turn on notifications.** Click *Enable on this device*. On iPhone, first tap
    Share → *Add to Home Screen*, then open the app from there and enable.
 
 That's it. Press **Make a video** to start your first one, or turn on the schedule in

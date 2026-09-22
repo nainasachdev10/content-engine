@@ -318,6 +318,60 @@ export function publishedVideoId(slug: string, title: string): string | null {
   }
 }
 
+/* ---------- Connections (account-level keys entered in the dashboard) ---------- */
+
+export const CONNECTION_KEYS = [
+  "ANTHROPIC_API_KEY", "ELEVENLABS_API_KEY", "IMAGE_API_KEY",
+  "RESEND_API_KEY", "NOTIFY_EMAIL_TO", "NOTIFY_EMAIL_FROM",
+  "SEGMIND_API_KEY", "HIGGSFIELD_API_KEY_ID", "HIGGSFIELD_API_KEY_SECRET",
+] as const;
+export type ConnectionKey = (typeof CONNECTION_KEYS)[number];
+
+const connectionsPath = () => join(repoRoot, "data", "connections.json");
+
+export function readConnections(): Partial<Record<ConnectionKey, string>> {
+  try {
+    return existsSync(connectionsPath()) ? JSON.parse(readFileSync(connectionsPath(), "utf8")) : {};
+  } catch {
+    return {};
+  }
+}
+
+export function writeConnections(patch: Partial<Record<ConnectionKey, string>>): void {
+  const current = readConnections();
+  for (const k of CONNECTION_KEYS) {
+    const v = patch[k];
+    if (v === undefined) continue;
+    if (v === "") delete current[k];
+    else current[k] = v.trim();
+  }
+  mkdirSync(join(repoRoot, "data"), { recursive: true });
+  writeFileSync(connectionsPath(), JSON.stringify(current, null, 2), { mode: 0o600 });
+}
+
+/** Effective value: dashboard-entered key, else host env. */
+export function keyValue(k: ConnectionKey): string {
+  return readConnections()[k] || process.env[k] || "";
+}
+
+/** What the client sees: which keys are set and where from — never the values. */
+export function connectionStatus() {
+  const c = readConnections();
+  const row = (k: ConnectionKey) => ({ set: !!(c[k] || process.env[k]), source: c[k] ? "dashboard" : process.env[k] ? "host" : "none" });
+  return {
+    anthropic: row("ANTHROPIC_API_KEY"),
+    elevenlabs: row("ELEVENLABS_API_KEY"),
+    replicate: row("IMAGE_API_KEY"),
+    resend: row("RESEND_API_KEY"),
+    emailTo: keyValue("NOTIFY_EMAIL_TO"),
+    segmind: row("SEGMIND_API_KEY"),
+    higgsfield: { set: !!(keyValue("HIGGSFIELD_API_KEY_ID") && keyValue("HIGGSFIELD_API_KEY_SECRET")), source: c.HIGGSFIELD_API_KEY_ID ? "dashboard" : process.env.HIGGSFIELD_API_KEY_ID ? "host" : "none" },
+    youtubeApp: !!(process.env.YOUTUBE_CLIENT_ID && process.env.YOUTUBE_CLIENT_SECRET),
+    dashboardUrl: process.env.DASHBOARD_URL ?? "",
+    coreReady: !!(keyValue("ANTHROPIC_API_KEY") && keyValue("ELEVENLABS_API_KEY") && keyValue("IMAGE_API_KEY")),
+  };
+}
+
 /* ---------- Notifications ---------- */
 
 export function getNotifications(limit = 20) {
@@ -329,8 +383,8 @@ export function getNotifications(limit = 20) {
 export function notificationSetup(): { email: boolean; emailTo: string; push: boolean; pushDevices: number; vapidPublicKey: string } {
   const pushDevices = (db().prepare("SELECT COUNT(*) AS n FROM push_subscriptions").get() as { n: number }).n;
   return {
-    email: !!(process.env.RESEND_API_KEY && process.env.NOTIFY_EMAIL_TO),
-    emailTo: process.env.NOTIFY_EMAIL_TO ?? "",
+    email: !!(keyValue("RESEND_API_KEY") && keyValue("NOTIFY_EMAIL_TO")),
+    emailTo: keyValue("NOTIFY_EMAIL_TO"),
     push: !!(process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY),
     pushDevices,
     vapidPublicKey: process.env.VAPID_PUBLIC_KEY ?? "",

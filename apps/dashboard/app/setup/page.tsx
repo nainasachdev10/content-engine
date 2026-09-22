@@ -1,4 +1,5 @@
-import { getProjects, notificationSetup } from "../../lib/engine";
+import { getProjects, notificationSetup, connectionStatus } from "../../lib/engine";
+import ConnectionsForm from "../settings/connections/connections-form";
 import NewChannel from "../channels/new-channel";
 import PushToggle from "../settings/push-toggle";
 
@@ -12,6 +13,19 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
   const q = await searchParams;
   const projects = getProjects();
   const notif = notificationSetup();
+  const conn = connectionStatus();
+
+  if (!conn.coreReady && q.step !== "channel") {
+    return (
+      <div className="wizard">
+        <div className="dots"><i className="on" /><i /><i /><i /></div>
+        <div className="stepnum">Before we start</div>
+        <h1>Connect the accounts that make your videos</h1>
+        <p className="lead">Three keys are needed: Anthropic writes and checks the scripts, ElevenLabs records the narration, Replicate creates the visuals. Each link opens the page where you copy the key. Stored on your engine only.</p>
+        <ConnectionsForm status={conn} />
+      </div>
+    );
+  }
 
   if (projects.length === 0 || q.step === "channel") {
     return (
