@@ -1,4 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+
+/** Behind Railway/Caddy the app sees http://; DASHBOARD_URL is the address Google must match. */
+const publicOrigin = (req: NextRequest) => (process.env.DASHBOARD_URL ?? "").replace(/\/$/, "") || req.nextUrl.origin;
 import { readConfig } from "../../../../lib/engine";
 
 const SCOPES = [
@@ -14,7 +17,7 @@ export async function GET(req: NextRequest) {
   if (!readConfig(slug)) return new NextResponse("Channel not found", { status: 404 });
   const clientId = process.env.YOUTUBE_CLIENT_ID;
   if (!clientId) return new NextResponse("YOUTUBE_CLIENT_ID is not set in .env", { status: 500 });
-  const redirect = `${req.nextUrl.origin}/api/youtube/callback`;
+  const redirect = `${publicOrigin(req)}/api/youtube/callback`;
   const url = new URL("https://accounts.google.com/o/oauth2/v2/auth");
   url.searchParams.set("client_id", clientId);
   url.searchParams.set("redirect_uri", redirect);

@@ -214,10 +214,18 @@ async function cmdRun(slug: string): Promise<void> {
     await execStage("visuals", () => runVisuals(project, { dir: videoDir, mode }));
     if (stop("visuals")) return finish("visuals complete");
 
-    const renderer = project.config.video.renderer;
+    let renderer = project.config.video.renderer;
     await execStage("render", async () => {
       if (renderer === "hyperframes") {
-        await runRenderHf(project, { dir: videoDir });
+        try {
+          await runRenderHf(project, { dir: videoDir });
+        } catch (err) {
+          // HyperFrames needs a working headless Chromium; if it can't run here, the
+          // ffmpeg renderer (Ken Burns + crossfades + burned SRT captions) still ships the video.
+          console.warn(`\nHyperFrames render failed — falling back to the ffmpeg renderer.\n${String(err).slice(0, 400)}`);
+          renderer = "ffmpeg";
+          await runRenderFfmpeg(project, { dir: videoDir });
+        }
       } else {
         await runRenderFfmpeg(project, { dir: videoDir });
       }

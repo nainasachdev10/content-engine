@@ -1,4 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+
+/** Behind Railway/Caddy the app sees http://; DASHBOARD_URL is the address Google must match. */
+const publicOrigin = (req: NextRequest) => (process.env.DASHBOARD_URL ?? "").replace(/\/$/, "") || req.nextUrl.origin;
 import { readConfig, writeConfig, writeProjectEnv } from "../../../../lib/engine";
 
 /** Google redirects here after consent. Exchanges the code for a refresh token,
@@ -11,7 +14,7 @@ export async function GET(req: NextRequest) {
   } catch {
     return new NextResponse("Bad state", { status: 400 });
   }
-  const back = new URL(state.back || "/", req.nextUrl.origin);
+  const back = new URL(state.back || "/", publicOrigin(req));
   const fail = (msg: string) => {
     back.searchParams.set("yt", "error");
     back.searchParams.set("msg", msg.slice(0, 200));
@@ -30,7 +33,7 @@ export async function GET(req: NextRequest) {
       code,
       client_id: clientId,
       client_secret: clientSecret,
-      redirect_uri: `${req.nextUrl.origin}/api/youtube/callback`,
+      redirect_uri: `${publicOrigin(req)}/api/youtube/callback`,
       grant_type: "authorization_code",
     }),
   });

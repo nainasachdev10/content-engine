@@ -88,7 +88,10 @@ async function sendTelegram(n: Notification, url: string): Promise<void> {
   if (!chats.length) return;
   const cta = ctaLabel(n.kind);
   const caption = `*${escapeMd(n.title)}*\n${escapeMd(n.body)}`;
-  const reply_markup = { inline_keyboard: [[{ text: cta, url }]] };
+  // Telegram only accepts public http(s) button URLs; on localhost fall back to plain text.
+  const buttonOk = /^https?:\/\/(?!localhost|127\.)/.test(url);
+  const reply_markup = buttonOk ? { inline_keyboard: [[{ text: cta, url }]] } : undefined;
+  const captionFull = buttonOk ? caption : `${caption}\n${escapeMd(url)}`;
   const thumb = n.thumbnailPath ? (n.thumbnailPath.startsWith("/") ? n.thumbnailPath : join(repoRoot, n.thumbnailPath)) : null;
   let sent = 0;
   for (const c of chats) {
@@ -97,15 +100,15 @@ async function sendTelegram(n: Notification, url: string): Promise<void> {
       const form = new FormData();
       form.append("chat_id", c.chat_id);
       form.append("photo", new Blob([readFileSync(thumb)], { type: "image/png" }), "thumbnail.png");
-      form.append("caption", caption);
+      form.append("caption", captionFull);
       form.append("parse_mode", "MarkdownV2");
-      form.append("reply_markup", JSON.stringify(reply_markup));
+      if (reply_markup) form.append("reply_markup", JSON.stringify(reply_markup));
       res = await fetch(tg("sendPhoto"), { method: "POST", body: form });
     } else {
       res = await fetch(tg("sendMessage"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ chat_id: c.chat_id, text: caption, parse_mode: "MarkdownV2", reply_markup }),
+        body: JSON.stringify({ chat_id: c.chat_id, text: captionFull, parse_mode: "MarkdownV2", ...(reply_markup ? { reply_markup } : {}) }),
       });
     }
     if (res.ok) sent++;

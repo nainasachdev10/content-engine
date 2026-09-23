@@ -139,7 +139,15 @@ export async function runRenderHf(
 
   const fontSize = project.config.captionTheme?.fontSize ?? 58;
   const fontFamily =
-    project.config.captionTheme?.fontFamily ?? '"Arial Rounded MT Bold", "Helvetica Rounded", Arial, sans-serif';
+    project.config.captionTheme?.fontFamily ?? '"Arial Rounded MT Bold", "Helvetica Rounded", "Liberation Sans", Arial, sans-serif';
+  // The renderer refuses families it can't resolve; local() declarations tell it these are
+  // OS fonts (present on macOS, absent on Linux where Liberation Sans — bundled in the image — is used).
+  const fontFaces = fontFamily
+    .split(",")
+    .map((n) => n.trim().replace(/^["']|["']$/g, ""))
+    .filter((n) => n && !/^(sans-serif|serif|monospace|system-ui)$/i.test(n))
+    .map((n) => `@font-face { font-family: "${n}"; src: local("${n}"); }`)
+    .join("\n      ");
 
   // --- Compose index.html ---
   const segClips = segments
@@ -153,9 +161,12 @@ export async function runRenderHf(
 
   const captionClips = groups
     .map((g, gi) => {
-      const gStart = g.words[0].start;
+      const gStart = Math.max(0, g.words[0].start - 0.05);
+      // Hold each line a beat after its last word, but never into the next line (same track).
+      const nextStart = gi + 1 < groups.length ? Math.max(0, groups[gi + 1].words[0].start - 0.05) : Infinity;
+      const gEnd = Math.min(g.end + 0.15, nextStart - 0.01, total);
       const spans = g.words.map((w) => `<span class="w" id="w-${w.i}">${esc(w.text)}</span>`).join(" ");
-      return `      <div class="clip capline" id="g-${gi}" data-start="${f(Math.max(0, gStart - 0.05))}" data-duration="${f(g.end - gStart + 0.15)}" data-track-index="5"><p class="captext">${spans}</p></div>`;
+      return `      <div class="clip capline" id="g-${gi}" data-start="${f(gStart)}" data-duration="${f(Math.max(0.2, gEnd - gStart))}" data-track-index="5"><p class="captext">${spans}</p></div>`;
     })
     .join("\n");
 
@@ -172,6 +183,7 @@ export async function runRenderHf(
     <title>${esc(project.config.name)} — pipeline render</title>
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
     <style>
+      ${fontFaces}
       body { margin: 0; background: #000; }
       #root { position: relative; width: 1920px; height: 1080px; overflow: hidden; background: #000; }
       .clip { position: absolute; inset: 0; }
@@ -237,10 +249,18 @@ ${captionClips}
     console.log("Rendering with hyperframes (this takes a few minutes)...");
     // Docker image pre-installs the CLI globally; elsewhere npx fetches it on first use.
     const hfCmd = process.env.HYPERFRAMES_BIN ? [process.env.HYPERFRAMES_BIN] : ["npx", "-y", "hyperframes"];
-    execFileSync(hfCmd[0], [...hfCmd.slice(1), "render", "--quality", "high", "--workers", "1", "--output", resolve(outPath)], {
-      cwd: hfDir,
-      stdio: ["ignore", "inherit", "inherit"],
-    });
+    try {
+      execFileSync(hfCmd[0], [...hfCmd.slice(1), "render", "--quality", "high", "--workers", "1", "--output", resolve(outPath)], {
+        cwd: hfDir,
+        stdio: ["ignore", "inherit", "pipe"],
+        maxBuffer: 64 * 1024 * 1024,
+      });
+    } catch (err: any) {
+      // Surface the renderer's own message (Chromium/launch/OOM) instead of a bare "Command failed".
+      const stderr = String(err?.stderr ?? "").trim().split("\n").filter(Boolean).slice(-8).join(" | ");
+      if (stderr) process.stderr.write(stderr + "\n");
+      throw new Error(`hyperframes render failed${err?.status != null ? ` (exit ${err.status})` : ""}${stderr ? `: ${stderr.slice(0, 600)}` : ""}`);
+    }
     // A fresh render invalidates any earlier pre-music source (see lib/music.ts).
     rmSync(join(dir, "video_nomusic.mp4"), { force: true });
     console.log(`Saved ${outPath}`);

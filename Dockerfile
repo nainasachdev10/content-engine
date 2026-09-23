@@ -14,16 +14,21 @@ COPY packages/pipeline/package.json packages/pipeline/
 COPY apps/dashboard/package.json apps/dashboard/
 RUN npm ci
 
-# HyperFrames CLI pre-installed so renders never depend on `npx` downloads at runtime.
-RUN npm install -g hyperframes@0.7.87
+# HyperFrames CLI pre-installed (a normal node_modules layout — a global install breaks its
+# runtime-manifest path) so renders never depend on `npx` downloads at runtime.
+RUN mkdir -p /opt/hyperframes && cd /opt/hyperframes && npm init -y >/dev/null && npm install hyperframes@0.7.87
 
 COPY . .
 RUN cd apps/dashboard && npx next build
 
 ENV NODE_ENV=production \
     FFMPEG_PATH=/usr/bin/ffmpeg \
+    HYPERFRAMES_BIN=/opt/hyperframes/node_modules/.bin/hyperframes \
     HYPERFRAMES_BROWSER_PATH=/usr/bin/chromium \
+    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium \
     PRODUCER_BROWSER_GPU_MODE=software \
+    PRODUCER_LOW_MEMORY_MODE=1 \
+    HYPERFRAMES_NO_TELEMETRY=1 \
     PORT=3777
 EXPOSE 3777
 
