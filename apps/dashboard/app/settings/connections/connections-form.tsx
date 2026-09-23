@@ -78,10 +78,10 @@ export default function ConnectionsForm({ status }: { status: Status }) {
         <details className="fold">
           <summary>Higgsfield (optional cinematic clip engine)</summary>
           <p className="help">Only if a channel selects Higgsfield DoP as its clip engine. Keys from cloud.higgsfield.ai. {status.higgsfield.set && "Currently set."}</p>
-          <label>Key ID</label>
+          <label>API key</label>
+          <input type="password" autoComplete="off" value={hfSecret} onChange={(e) => setHfSecret(e.target.value)} placeholder="Paste the key exactly as Higgsfield shows it (a single value, or id:secret)" />
+          <label>Key ID <span className="faint" style={{ fontWeight: 400 }}>— only if Higgsfield gave you a separate ID</span></label>
           <input type="password" autoComplete="off" value={hfId} onChange={(e) => setHfId(e.target.value)} />
-          <label>Key secret</label>
-          <input type="password" autoComplete="off" value={hfSecret} onChange={(e) => setHfSecret(e.target.value)} />
         </details>
       </div>
       <div className="row" style={{ margin: "4px 0 24px" }}>

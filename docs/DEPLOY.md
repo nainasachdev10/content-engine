@@ -75,7 +75,9 @@ because renders are bursty and it bills actual usage; on Render you need the Pro
    `DASHBOARD_URL=https://<service>.up.railway.app` (or your custom domain). Leave
    `FFMPEG_PATH` unset.
 4. Settings → Resources: allow at least 4 GB RAM (8 GB for talking-head/HyperFrames-heavy channels).
-5. Networking → Generate domain (or attach `engine.yourclient.com`). Use that URL for the
+5. Networking → Generate domain (or attach `engine.yourclient.com`). Railway injects its
+   own `PORT` (often 8080) and the app listens on it, so leave the domain's target port at
+   whatever Railway proposes — or set `PORT=3777` yourself and match it. Use the URL for the
    Google OAuth redirect `…/api/youtube/callback`.
 
 **Render**: Web Service from the repo (Docker), plan Pro (4 GB+), add a Disk mounted at

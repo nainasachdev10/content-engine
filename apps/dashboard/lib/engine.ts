@@ -365,7 +365,7 @@ export function connectionStatus() {
     resend: row("RESEND_API_KEY"),
     emailTo: keyValue("NOTIFY_EMAIL_TO"),
     segmind: row("SEGMIND_API_KEY"),
-    higgsfield: { set: !!(keyValue("HIGGSFIELD_API_KEY_ID") && keyValue("HIGGSFIELD_API_KEY_SECRET")), source: c.HIGGSFIELD_API_KEY_ID ? "dashboard" : process.env.HIGGSFIELD_API_KEY_ID ? "host" : "none" },
+    higgsfield: { set: !!(keyValue("HIGGSFIELD_API_KEY_ID") || keyValue("HIGGSFIELD_API_KEY_SECRET")), source: c.HIGGSFIELD_API_KEY_ID ? "dashboard" : process.env.HIGGSFIELD_API_KEY_ID ? "host" : "none" },
     youtubeApp: !!(process.env.YOUTUBE_CLIENT_ID && process.env.YOUTUBE_CLIENT_SECRET),
     dashboardUrl: process.env.DASHBOARD_URL ?? "",
     coreReady: !!(keyValue("ANTHROPIC_API_KEY") && keyValue("ELEVENLABS_API_KEY") && keyValue("IMAGE_API_KEY")),

@@ -125,12 +125,15 @@ export async function stagePublicFile(path: string, type: string): Promise<strin
 
 const HF_API = "https://api.higgsfield.ai";
 
+/** Higgsfield auth is "Key <id>:<secret>". Accept the pair, a single "id:secret" string, or a bare key. */
 function hfHeaders(): Record<string, string> {
-  requireSecrets("higgsfieldKeyId", "higgsfieldKeySecret");
-  return {
-    Authorization: `Key ${secrets.higgsfieldKeyId}:${secrets.higgsfieldKeySecret}`,
-    "Content-Type": "application/json",
-  };
+  let id = secrets.higgsfieldKeyId;
+  let secret = secrets.higgsfieldKeySecret;
+  const single = id || secret;
+  if ((!id || !secret) && single.includes(":")) [id, secret] = single.split(":", 2);
+  const token = id && secret ? `${id}:${secret}` : single;
+  if (!token) throw new Error("Missing key(s): Higgsfield. Add it in the dashboard under Settings → Connections.");
+  return { Authorization: `Key ${token}`, "Content-Type": "application/json" };
 }
 
 async function higgsfieldClip(project: Project, imagePath: string, prompt: string, motion?: string): Promise<Buffer> {
