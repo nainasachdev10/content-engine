@@ -1,6 +1,7 @@
 import { notificationSetup, getProjects } from "../../lib/engine";
 import PushToggle from "./push-toggle";
 import TestNotification from "./test-notification";
+import TelegramConnect from "./telegram-connect";
 
 export const dynamic = "force-dynamic";
 
@@ -31,6 +32,19 @@ export default function SettingsPage() {
             </div>
           </div>
           <div className="act">{n.push && <PushToggle publicKey={n.vapidPublicKey} />}</div>
+        </div>
+
+        <div className="checkrow" style={{ alignItems: "flex-start" }}>
+          <span className={`ic ${n.telegramChats.length ? "ok" : ""}`}>{n.telegramChats.length ? "✓" : "✈"}</span>
+          <div style={{ flex: 1 }}>
+            <div className="k">Telegram <span className="faint" style={{ fontWeight: 400 }}>· recommended on phones</span></div>
+            <div className="d" style={{ marginBottom: 8 }}>
+              {n.telegram
+                ? "Get a message with the thumbnail and a review button. Works on any phone, no app install beyond Telegram."
+                : "Create a bot with @BotFather in Telegram (send /newbot, copy the token), paste the token under Connections, then connect here."}
+            </div>
+            <TelegramConnect chats={n.telegramChats} />
+          </div>
         </div>
 
         <div className="checkrow">

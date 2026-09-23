@@ -2,13 +2,14 @@
 import { useState } from "react";
 
 type Row = { set: boolean; source: string };
-type Status = { anthropic: Row; elevenlabs: Row; replicate: Row; resend: Row; emailTo: string; segmind: Row; higgsfield: Row };
+type Status = { anthropic: Row; elevenlabs: Row; replicate: Row; resend: Row; emailTo: string; segmind: Row; higgsfield: Row; telegram: Row };
 
 const SERVICES: { key: string; service: string; label: string; help: string; link: string; required?: boolean }[] = [
   { key: "ANTHROPIC_API_KEY", service: "anthropic", label: "Anthropic", help: "Research, scripts, quality checks, edits.", link: "https://console.anthropic.com/settings/keys", required: true },
   { key: "ELEVENLABS_API_KEY", service: "elevenlabs", label: "ElevenLabs", help: "Narration. Creator plan or higher for regular videos.", link: "https://elevenlabs.io/app/settings/api-keys", required: true },
   { key: "IMAGE_API_KEY", service: "replicate", label: "Replicate", help: "Images, animated clips, presenter, music. Add credit to the account.", link: "https://replicate.com/account/api-tokens", required: true },
   { key: "RESEND_API_KEY", service: "resend", label: "Resend (email notifications)", help: "Optional. Free tier is enough.", link: "https://resend.com/api-keys" },
+  { key: "TELEGRAM_BOT_TOKEN", service: "telegram", label: "Telegram bot (notifications on your phone)", help: "Optional, recommended. In Telegram open @BotFather → /newbot → copy the token. Then connect your chat under Settings → Notifications.", link: "https://t.me/BotFather" },
   { key: "SEGMIND_API_KEY", service: "", label: "Segmind (Higgsfield lip-sync)", help: "Optional — only if a channel uses the Higgsfield presenter engine.", link: "https://cloud.segmind.com/console/api-keys" },
 ];
 

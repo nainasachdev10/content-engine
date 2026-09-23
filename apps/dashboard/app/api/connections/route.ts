@@ -38,6 +38,10 @@ export async function POST(req: NextRequest) {
       const r = await fetch("https://api.resend.com/domains", { headers: { Authorization: `Bearer ${keyValue("RESEND_API_KEY")}` } });
       return new NextResponse(r.ok ? "ok" : `Resend rejected the key (${r.status})`, { status: r.ok ? 200 : 400 });
     }
+    if (service === "telegram") {
+      const me = (await (await fetch(`https://api.telegram.org/bot${keyValue("TELEGRAM_BOT_TOKEN")}/getMe`)).json()) as any;
+      return new NextResponse(me.ok ? `ok — @${me.result.username}` : `Telegram rejected the token (${me.description ?? me.error_code})`, { status: me.ok ? 200 : 400 });
+    }
     return new NextResponse("Unknown service", { status: 400 });
   } catch (err) {
     return new NextResponse(`Could not reach the service: ${String(err).slice(0, 120)}`, { status: 502 });

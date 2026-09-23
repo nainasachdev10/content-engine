@@ -48,7 +48,7 @@ import { runUpload } from "./modules/upload.js";
 import { runAuth } from "./modules/auth.js";
 import { runEdit, runRollback } from "./modules/edit.js";
 import { runMusic } from "./lib/music.js";
-import { notify, notifyStatus } from "./lib/notify.js";
+import { notify, notifyStatus, registerTelegramChats } from "./lib/notify.js";
 import {
   appendRunLog,
   loadNotionIds,
@@ -83,7 +83,8 @@ function usage(): never {
   engine job <teardown|ideas-audit|metrics> <slug>
   engine scheduler [--interval-min 5]
   engine push-keys                 generate VAPID keys for push notifications
-  engine notify-test               send a test notification through every configured channel`);
+  engine notify-test               send a test notification through every configured channel
+  engine telegram-connect          register chats that messaged the Telegram bot`);
   process.exit(1);
 }
 
@@ -763,6 +764,11 @@ async function main(): Promise<void> {
       return cmdPushKeys();
     case "notify-test":
       return cmdNotifyTest();
+    case "telegram-connect": {
+      const r = await registerTelegramChats();
+      console.log(JSON.stringify(r));
+      return;
+    }
     default:
       usage();
   }

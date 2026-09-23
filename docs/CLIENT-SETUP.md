@@ -13,8 +13,10 @@ on your computer and your phone. Nothing is ever published to YouTube until you 
    and the tone you want. The engine writes its own style guide from this.
 4. **Connect YouTube.** Sign in with the Google account that owns the channel and click
    *Allow*. This only lets the engine publish videos *after you approve them*.
-5. **Turn on notifications.** Click *Enable on this device*. On iPhone, first tap
-   Share → *Add to Home Screen*, then open the app from there and enable.
+5. **Turn on notifications.** Easiest on a phone: Telegram. In Telegram, message
+   @BotFather, send `/newbot`, copy the token it gives you, paste it under Settings →
+   Connections, then on Settings → Notifications open your bot, press *Start*, and click
+   *Check connection*. (Email and browser push are also available.)
 
 That's it. Press **Make a video** to start your first one, or turn on the schedule in
 the channel's settings and videos will arrive on their own.

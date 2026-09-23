@@ -61,6 +61,11 @@ CREATE TABLE IF NOT EXISTS push_subscriptions (
   subscription_json TEXT NOT NULL,
   created_at        TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS telegram_chats (
+  chat_id    TEXT PRIMARY KEY,
+  name       TEXT,
+  created_at TEXT NOT NULL
+);
 CREATE TABLE IF NOT EXISTS notifications (
   id         INTEGER PRIMARY KEY AUTOINCREMENT,
   kind       TEXT NOT NULL,

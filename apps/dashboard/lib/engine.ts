@@ -34,6 +34,7 @@ export function db(): Database.Database {
       CREATE TABLE IF NOT EXISTS run_stages (id INTEGER PRIMARY KEY AUTOINCREMENT, run_id TEXT NOT NULL, stage TEXT NOT NULL, status TEXT NOT NULL, error TEXT, artifacts_json TEXT, started_at TEXT, finished_at TEXT, UNIQUE(run_id, stage));
       CREATE TABLE IF NOT EXISTS run_edits (id INTEGER PRIMARY KEY AUTOINCREMENT, run_id TEXT NOT NULL, instruction TEXT NOT NULL, summary TEXT, stages_json TEXT, status TEXT NOT NULL, error TEXT, created_at TEXT NOT NULL, finished_at TEXT);
       CREATE TABLE IF NOT EXISTS push_subscriptions (endpoint TEXT PRIMARY KEY, subscription_json TEXT NOT NULL, created_at TEXT NOT NULL);
+      CREATE TABLE IF NOT EXISTS telegram_chats (chat_id TEXT PRIMARY KEY, name TEXT, created_at TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS notifications (id INTEGER PRIMARY KEY AUTOINCREMENT, kind TEXT NOT NULL, project TEXT NOT NULL, run_id TEXT, title TEXT NOT NULL, body TEXT NOT NULL, path TEXT NOT NULL, created_at TEXT NOT NULL);
     `);
   }
@@ -323,7 +324,7 @@ export function publishedVideoId(slug: string, title: string): string | null {
 export const CONNECTION_KEYS = [
   "ANTHROPIC_API_KEY", "ELEVENLABS_API_KEY", "IMAGE_API_KEY",
   "RESEND_API_KEY", "NOTIFY_EMAIL_TO", "NOTIFY_EMAIL_FROM",
-  "SEGMIND_API_KEY", "HIGGSFIELD_API_KEY_ID", "HIGGSFIELD_API_KEY_SECRET",
+  "SEGMIND_API_KEY", "HIGGSFIELD_API_KEY_ID", "HIGGSFIELD_API_KEY_SECRET", "TELEGRAM_BOT_TOKEN",
 ] as const;
 export type ConnectionKey = (typeof CONNECTION_KEYS)[number];
 
@@ -366,6 +367,7 @@ export function connectionStatus() {
     emailTo: keyValue("NOTIFY_EMAIL_TO"),
     segmind: row("SEGMIND_API_KEY"),
     higgsfield: { set: !!(keyValue("HIGGSFIELD_API_KEY_ID") || keyValue("HIGGSFIELD_API_KEY_SECRET")), source: c.HIGGSFIELD_API_KEY_ID ? "dashboard" : process.env.HIGGSFIELD_API_KEY_ID ? "host" : "none" },
+    telegram: row("TELEGRAM_BOT_TOKEN"),
     youtubeApp: !!(process.env.YOUTUBE_CLIENT_ID && process.env.YOUTUBE_CLIENT_SECRET),
     dashboardUrl: process.env.DASHBOARD_URL ?? "",
     coreReady: !!(keyValue("ANTHROPIC_API_KEY") && keyValue("ELEVENLABS_API_KEY") && keyValue("IMAGE_API_KEY")),
@@ -380,9 +382,12 @@ export function getNotifications(limit = 20) {
     .all(limit) as { id: number; kind: string; project: string; run_id: string | null; title: string; body: string; path: string; created_at: string }[];
 }
 
-export function notificationSetup(): { email: boolean; emailTo: string; push: boolean; pushDevices: number; vapidPublicKey: string } {
+export function notificationSetup(): { email: boolean; emailTo: string; push: boolean; pushDevices: number; vapidPublicKey: string; telegram: boolean; telegramChats: { chat_id: string; name: string | null }[] } {
   const pushDevices = (db().prepare("SELECT COUNT(*) AS n FROM push_subscriptions").get() as { n: number }).n;
+  const telegramChats = db().prepare("SELECT chat_id, name FROM telegram_chats ORDER BY created_at").all() as { chat_id: string; name: string | null }[];
   return {
+    telegram: !!keyValue("TELEGRAM_BOT_TOKEN"),
+    telegramChats,
     email: !!(keyValue("RESEND_API_KEY") && keyValue("NOTIFY_EMAIL_TO")),
     emailTo: keyValue("NOTIFY_EMAIL_TO"),
     push: !!(process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY),

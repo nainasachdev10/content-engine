@@ -364,9 +364,12 @@ details.fold > *:not(summary) { margin-top: 8px; }
 .bell { position: relative; display: inline-flex; }
 .bell .n { position: absolute; top: -4px; right: -6px; background: var(--red); color: #fff; font-size: 9.5px; font-weight: 700; border-radius: 8px; padding: 0 4px; line-height: 14px; }
 .dropdown {
-  position: absolute; top: 34px; right: 0; width: 340px; max-width: 92vw; background: var(--panel); border: 1px solid var(--border);
+  position: absolute; top: 34px; left: 0; width: 340px; max-width: 92vw; background: var(--panel); border: 1px solid var(--border);
   border-radius: 12px; box-shadow: 0 12px 32px rgba(23,23,26,0.14); z-index: 50; padding: 6px; max-height: 420px; overflow: auto;
 }
+/* In the sidebar the bell sits at the far right edge, so open the panel to the right of the sidebar. */
+.sidebar .dropdown { position: fixed; top: 52px; left: 232px; }
+@media (max-width: 800px) { .topbar .dropdown { left: auto; right: 0; } }
 .dropdown a.item { display: block; padding: 10px 12px; border-radius: 8px; }
 .dropdown a.item:hover { background: var(--panel2); }
 .dropdown a.item .t { font-weight: 600; font-size: 13px; color: var(--ink); }
