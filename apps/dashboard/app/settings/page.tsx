@@ -64,6 +64,12 @@ export default function SettingsPage() {
         </div>
       </div>
 
+      {process.env.RENDER_LOW_MEMORY === "1" && (
+        <div className="note" style={{ marginBottom: 12 }}>
+          Low-memory rendering is on (720p, classic captions) — fine for testing on a small host. Remove <code>RENDER_LOW_MEMORY</code> and give the engine 8 GB for full-quality 1080p videos with animated captions.
+        </div>
+      )}
+
       <div className="card">
         <h3>Connections</h3>
         <p className="muted" style={{ margin: "0 0 10px" }}>The AI and notification accounts your videos are made with.</p>

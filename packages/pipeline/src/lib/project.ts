@@ -30,6 +30,8 @@ export interface ProjectConfig {
     clipProvider?: "replicate" | "higgsfield";
     /** Model id on that provider (defaults: kwaivgi/kling-v2.5-turbo-pro / higgsfield-ai/dop/standard). */
     clipModel?: string;
+    /** Replicate image model for stills/thumbnails (default black-forest-labs/flux-1.1-pro). */
+    imageModel?: string;
   };
   voice: {
     provider: "elevenlabs";
@@ -226,7 +228,7 @@ export function defaultConfig(name: string, niche: string): ProjectConfig {
         "- LANGUAGE: short clear sentences, vivid concrete comparisons, no unexplained jargon.",
       ].join("\n"),
       visualStyle:
-        "High-quality cinematic digital illustration with rich lighting and dynamic composition — action mid-motion, interesting camera angles, not static portraits.",
+        "Editorial documentary photography look: natural light, real-world materials and textures, restrained color grade (muted midtones, no neon), 35mm lens perspective, subjects mid-action with foreground/background depth. Believable, specific, and grounded — never glossy CGI, glowing effects or symmetrical hero poses.",
       thumbnailStyle:
         "Bold, high-contrast YouTube thumbnail composition: the video's most striking subject large in the right two-thirds with soft glowing rim lighting, vibrant complementary colors, simple uncluttered background, and a clearly darker empty area covering the left third reserved for text. Honest — never misleading shock imagery.",
       metadataGuidance:

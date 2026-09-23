@@ -49,7 +49,8 @@ BANNED PHRASES (these instantly mark a script as AI-generated — never use them
 CINEMATOGRAPHY (each scene is a film shot, not an illustration):
 - Give every scene a "shot" (choose from: establishing wide, medium, close-up, extreme close-up, aerial, POV, low-angle, over-the-shoulder) — never the same shot twice in a row, and use at least 4 different shot types across the video.
 - Give every scene a "motion": one short camera-move phrase ("slow push-in toward the anglerfish's lure", "drift right past the rows of amphorae").
-- Write visual_description like a film still: subject mid-action, foreground AND background layers, a named light source ("bioluminescent glow from below", "late-afternoon sun through dust"). No static centered portraits.`;
+- Write visual_description like a film still: subject mid-action, foreground AND background layers, a named light source ("bioluminescent glow from below", "late-afternoon sun through dust"). No static centered portraits.
+- AUTHENTICITY: describe subjects the way a knowledgeable art director would — correct attributes, dress, architecture, species, era and iconography for the culture/subject (never a generic "fantasy" stand-in). Name the medium and palette from the channel's visual style in each description. Prefer restrained, believable lighting over glow and lens flare.`;
 
 /** Extra rules when the channel has an on-camera host: some scenes are the presenter talking. */
 function presenterRules(config: Project["config"]): string {

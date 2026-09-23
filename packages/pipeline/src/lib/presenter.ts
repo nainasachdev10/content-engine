@@ -44,7 +44,7 @@ export async function ensurePresenterImage(project: Project): Promise<string> {
   const prompt = `Photorealistic medium shot of ${desc}. Facing the camera, head and shoulders centred, neutral relaxed mouth, soft studio lighting, shallow depth of field, tidy background matching this channel: ${project.config.niche}. 16:9, high detail, no text.`;
   mkdirSync(join(project.dir, "assets"), { recursive: true });
   process.stdout.write("Presenter image (one-time)... ");
-  writeFileSync(path, await generateImageWithRetry(prompt));
+  writeFileSync(path, await generateImageWithRetry(prompt, 3, project.config.video.imageModel));
   console.log(`saved → ${path}`);
   return path;
 }

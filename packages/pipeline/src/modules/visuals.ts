@@ -1,10 +1,12 @@
 /**
- * Stage — Visuals (Replicate Flux images; hero clips via lib/clips.ts — Replicate Kling 2.5 by default or Higgsfield DoP)
+ * Stage — Visuals (Replicate images — Flux 1.1 Pro by default, configurable; hero clips via lib/clips.ts — Replicate Kling 2.5 by default or Higgsfield DoP)
  * Writes <videoDir>/images/scene-<n>.png (+ .mp4 for heroes) + visuals-manifest.json.
  * Skip-existing on both so already-billed scenes never regenerate.
  */
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
+import { readFileSync, writeFileSync, mkdirSync, existsSync, rmSync } from "node:fs";
 import { join } from "node:path";
+import { tmpdir } from "node:os";
+import { execFileSync } from "node:child_process";
 import type { Project } from "../lib/project.js";
 import { secrets, requireSecrets } from "../lib/env.js";
 import { presenterEnabled, ensurePresenterImage, generateTalkingClip } from "../lib/presenter.js";
@@ -50,20 +52,48 @@ async function fetchWithRetry(url: string, init?: RequestInit, attempts = 6): Pr
   throw new Error(`Replicate unreachable after ${attempts} attempts${lastErr ? `: ${String(lastErr)}` : " (429)"}`);
 }
 
-async function generateImage(prompt: string): Promise<Buffer> {
-  const res = await fetchWithRetry("https://api.replicate.com/v1/models/black-forest-labs/flux-schnell/predictions", {
+export const DEFAULT_IMAGE_MODEL = "black-forest-labs/flux-1.1-pro";
+
+/** What makes stills look "AI": oversaturation, glow, symmetry, plastic skin. Appended to every image prompt. */
+export const IMAGE_NEGATIVES =
+  "Avoid: oversaturated neon colors, glowing eyes, lens flare, plastic or airbrushed skin, perfectly symmetrical hero poses, generic fantasy-CGI sheen, extra limbs or fingers, text, watermarks, logos.";
+
+let imageFieldsCache: Record<string, string[]> = {};
+async function imageModelFields(model: string): Promise<string[]> {
+  if (imageFieldsCache[model]) return imageFieldsCache[model];
+  const res = await fetchWithRetry(`https://api.replicate.com/v1/models/${model}`, {
+    headers: { Authorization: `Bearer ${secrets.imageApiKey}` },
+  });
+  if (!res.ok) throw new Error(`Replicate model lookup ${res.status}: ${(await res.text()).slice(0, 200)}`);
+  const data = (await res.json()) as any;
+  const fields = Object.keys(data.latest_version?.openapi_schema?.components?.schemas?.Input?.properties ?? {});
+  imageFieldsCache[model] = fields;
+  return fields;
+}
+
+async function generateImage(prompt: string, model = process.env.IMAGE_MODEL || DEFAULT_IMAGE_MODEL): Promise<Buffer> {
+  const fields = await imageModelFields(model);
+  const input: Record<string, unknown> = { prompt: `${prompt} ${IMAGE_NEGATIVES}` };
+  if (fields.includes("aspect_ratio")) input.aspect_ratio = "16:9";
+  if (fields.includes("output_format")) input.output_format = "png";
+  if (fields.includes("negative_prompt")) input.negative_prompt = IMAGE_NEGATIVES.replace(/^Avoid: /, "");
+  if (fields.includes("prompt_upsampling")) input.prompt_upsampling = false; // keep our art direction verbatim
+  if (fields.includes("safety_tolerance")) input.safety_tolerance = 2;
+  if (fields.includes("output_quality")) input.output_quality = 95;
+
+  const res = await fetchWithRetry(`https://api.replicate.com/v1/models/${model}/predictions`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${secrets.imageApiKey}`,
       "Content-Type": "application/json",
       Prefer: "wait",
     },
-    body: JSON.stringify({ input: { prompt, aspect_ratio: "16:9", output_format: "png" } }),
+    body: JSON.stringify({ input }),
   });
   if (!res.ok) throw new Error(`Replicate ${res.status}: ${await res.text()}`);
   let prediction = (await res.json()) as {
     status: string;
-    output?: string[];
+    output?: string[] | string;
     error?: string;
     urls?: { get: string };
   };
@@ -77,21 +107,43 @@ async function generateImage(prompt: string): Promise<Buffer> {
     });
     prediction = (await poll.json()) as typeof prediction;
   }
-  if (prediction.status !== "succeeded" || !prediction.output?.[0]) {
-    throw new Error(`Prediction failed: ${prediction.error ?? prediction.status}`);
+  const out = Array.isArray(prediction.output) ? prediction.output[0] : prediction.output;
+  if (prediction.status !== "succeeded" || !out) {
+    throw new Error(`Prediction failed (${model}): ${prediction.error ?? prediction.status}`);
   }
-  const img = await fetch(prediction.output[0]);
-  return Buffer.from(await img.arrayBuffer());
+  const img = await fetch(out);
+  return normalize169(Buffer.from(await img.arrayBuffer()));
+}
+
+/** Models don't always honour aspect_ratio; a non-16:9 still shows as letterbox bars in the
+ *  video. Center-crop/scale to exactly 1920x1080 so every still fills the frame. */
+function normalize169(png: Buffer): Buffer {
+  const tmpIn = join(tmpdir(), `img-${process.pid}-${Date.now()}-in.png`);
+  const tmpOut = tmpIn.replace(/-in\.png$/, "-out.png");
+  try {
+    writeFileSync(tmpIn, png);
+    execFileSync(secrets.ffmpegPath, [
+      "-y", "-loglevel", "error", "-i", tmpIn,
+      "-vf", "scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080",
+      "-frames:v", "1", tmpOut,
+    ]);
+    return readFileSync(tmpOut);
+  } catch {
+    return png; // keep the original rather than fail the stage
+  } finally {
+    rmSync(tmpIn, { force: true });
+    rmSync(tmpOut, { force: true });
+  }
 }
 
 /** Predictions can fail terminally on Replicate's side (e.g. "Director: unexpected
  *  error handling prediction") — recreate the prediction a few times before giving up.
  *  Exported for thumbnail.ts so every Replicate image call shares the same resilience. */
-export async function generateImageWithRetry(prompt: string, attempts = 3): Promise<Buffer> {
+export async function generateImageWithRetry(prompt: string, attempts = 3, model?: string): Promise<Buffer> {
   let lastErr: unknown;
   for (let i = 0; i < attempts; i++) {
     try {
-      return await generateImage(prompt);
+      return await generateImage(prompt, model);
     } catch (err) {
       lastErr = err;
       const waitSec = 10 * (i + 1);
@@ -170,7 +222,7 @@ export async function runVisuals(
       png = readFileSync(imgPath);
     } else {
       process.stdout.write(`Scene ${sceneNum}/${n} image... `);
-      png = await generateImageWithRetry(prompt);
+      png = await generateImageWithRetry(prompt, 3, project.config.video.imageModel);
       writeFileSync(imgPath, png);
       console.log("done");
     }

@@ -7,7 +7,7 @@
  * shifts it), and a subtle saturation/contrast grade is applied at the end.
  * Pair with runCaptions(burn: true) to produce final_video.mp4.
  */
-import { readFileSync, readdirSync, existsSync } from "node:fs";
+import { readFileSync, readdirSync, existsSync, mkdirSync, rmSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { execFileSync } from "node:child_process";
 import type { Project } from "../lib/project.js";
@@ -15,6 +15,15 @@ import { secrets } from "../lib/env.js";
 import { mediaDuration } from "../lib/media.js";
 
 type Scene = { n: number; type: "image" | "video" };
+/** RENDER_LOW_MEMORY=1 → 720p, lighter encode: fits hosts with <1 GB RAM (e.g. a Railway trial). */
+export const LOW_MEMORY = process.env.RENDER_LOW_MEMORY === "1";
+const W = LOW_MEMORY ? 1280 : 1920;
+const H = LOW_MEMORY ? 720 : 1080;
+// zoompan works on an oversampled frame so pans stay sharp; RAM scales with it.
+const OS = LOW_MEMORY ? 1.25 : 2;
+const SW = Math.round((W * OS) / 2) * 2;
+const SH = Math.round((H * OS) / 2) * 2;
+
 type Seg =
   | { kind: "kb"; img: string; dur: number; seed: number }
   | { kind: "clip"; path: string; dur: number; loops: number };
@@ -89,9 +98,7 @@ export async function runRenderFfmpeg(_project: Project, opts: { dir: string }):
 
   // Randomized Ken Burns: each still gets a varied zoom direction + pan path so
   // consecutive scenes never move identically (avoids a repetitive, mass-produced feel).
-  const addKenBurns = (imgPath: string, durSec: number, seed: number) => {
-    ffArgs.push("-i", imgPath);
-    const frames = Math.max(1, Math.round(durSec * 30));
+  const kbMoves = (frames: number): [string, string, string][] => {
     const p = `on/${frames}`; // progress 0→1 through the segment
     const zoomIn = `'min(1+0.25*${p},1.25)'`;
     const zoomOut = `'max(1.25-0.25*${p},1.0)'`;
@@ -101,7 +108,7 @@ export async function runRenderFfmpeg(_project: Project, opts: { dir: string }):
     const yCenter = `'ih/2-(ih/zoom/2)'`;
     const yTtoB = `'(ih-ih/zoom)*${p}'`;
     const yBtoT = `'(ih-ih/zoom)*(1-${p})'`;
-    const moves: [string, string, string][] = [
+    return [
       [zoomIn, xCenter, yCenter],
       [zoomOut, xCenter, yCenter],
       [zoomIn, xLtoR, yCenter],
@@ -111,32 +118,64 @@ export async function runRenderFfmpeg(_project: Project, opts: { dir: string }):
       [zoomIn, xCenter, yTtoB],
       [zoomOut, xCenter, yBtoT],
     ];
-    // Deterministic per scene within a render, varied across scenes.
-    const [z, x, y] = moves[(seed * 7 + segLabels.length * 3) % moves.length];
-    const label = `s${segLabels.length}`;
-    filterParts.push(
-      `[${inputIdx}:v]scale=3840:2160:force_original_aspect_ratio=increase,crop=3840:2160,` +
-        `zoompan=z=${z}:d=${frames}:x=${x}:y=${y}:s=1920x1080:fps=30,` +
-        `format=yuv420p,setsar=1[${label}]`
-    );
-    segLabels.push(label);
-    inputIdx++;
   };
+  // Randomized Ken Burns: each still gets a varied zoom direction + pan path so
+  // consecutive scenes never move identically (avoids a repetitive, mass-produced feel).
+  const kbFilter = (durSec: number, seed: number, idx: number): string => {
+    const frames = Math.max(1, Math.round(durSec * 30));
+    const [z, x, y] = kbMoves(frames)[(seed * 7 + idx * 3) % 8];
+    return (
+      `scale=${SW}:${SH}:force_original_aspect_ratio=increase,crop=${SW}:${SH},` +
+      `zoompan=z=${z}:d=${frames}:x=${x}:y=${y}:s=${W}x${H}:fps=30,format=yuv420p,setsar=1`
+    );
+  };
+  const clipFilter = (extend: number): string =>
+    `scale=${W}:${H}:force_original_aspect_ratio=decrease,pad=${W}:${H}:(ow-iw)/2:(oh-ih)/2,format=yuv420p,fps=30,setsar=1` +
+    (extend > 0 ? `,tpad=stop_mode=clone:stop_duration=${extend.toFixed(3)}` : "");
 
-  for (let i = 0; i < plan.length; i++) {
-    const seg = plan[i];
-    const extend = i < plan.length - 1 ? F : 0; // non-last segments carry F extra content for the fade overlap
-    if (seg.kind === "kb") {
-      addKenBurns(seg.img, seg.dur + extend, seg.seed);
-    } else {
-      ffArgs.push("-stream_loop", String(seg.loops - 1), "-t", seg.dur.toFixed(3), "-i", seg.path);
+  if (LOW_MEMORY) {
+    // Two passes: each segment → its own intermediate (one zoompan in RAM at a time),
+    // then the intermediates are joined. Peak memory stays ~flat with scene count.
+    const tmpDir = join(dir, "render-tmp");
+    mkdirSync(tmpDir, { recursive: true });
+    const parts: string[] = [];
+    for (let i = 0; i < plan.length; i++) {
+      const seg = plan[i];
+      const extend = i < plan.length - 1 ? F : 0;
+      const part = join(tmpDir, `seg-${i}.mp4`);
+      const args = ["-y", "-loglevel", "error"];
+      if (seg.kind === "kb") args.push("-i", seg.img, "-vf", kbFilter(seg.dur + extend, seg.seed, i));
+      else args.push("-stream_loop", String(seg.loops - 1), "-t", seg.dur.toFixed(3), "-i", seg.path, "-vf", clipFilter(extend));
+      args.push("-an", "-c:v", "libx264", "-preset", "veryfast", "-crf", "18", "-threads", "2", "-x264-params", "rc-lookahead=10:ref=1:bframes=0", part);
+      execFileSync(secrets.ffmpegPath, args, { stdio: ["ignore", "ignore", "inherit"] });
+      parts.push(part);
+    }
+    for (const part of parts) ffArgs.push("-i", part);
+    for (let i = 0; i < parts.length; i++) {
+      filterParts.push(`[${i}:v]format=yuv420p,setsar=1[s${i}]`);
+      segLabels.push(`s${i}`);
+    }
+    inputIdx = parts.length;
+      } else {
+    const addKenBurns = (imgPath: string, durSec: number, seed: number) => {
+      ffArgs.push("-i", imgPath);
       const label = `s${segLabels.length}`;
-      const pad = extend > 0 ? `,tpad=stop_mode=clone:stop_duration=${extend.toFixed(3)}` : "";
-      filterParts.push(
-        `[${inputIdx}:v]scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2,format=yuv420p,fps=30,setsar=1${pad}[${label}]`
-      );
+      filterParts.push(`[${inputIdx}:v]${kbFilter(durSec, seed, segLabels.length)}[${label}]`);
       segLabels.push(label);
       inputIdx++;
+    };
+    for (let i = 0; i < plan.length; i++) {
+      const seg = plan[i];
+      const extend = i < plan.length - 1 ? F : 0; // non-last segments carry F extra content for the fade overlap
+      if (seg.kind === "kb") {
+        addKenBurns(seg.img, seg.dur + extend, seg.seed);
+      } else {
+        ffArgs.push("-stream_loop", String(seg.loops - 1), "-t", seg.dur.toFixed(3), "-i", seg.path);
+        const label = `s${segLabels.length}`;
+        filterParts.push(`[${inputIdx}:v]${clipFilter(extend)}[${label}]`);
+        segLabels.push(label);
+        inputIdx++;
+      }
     }
   }
 
@@ -171,13 +210,15 @@ export async function runRenderFfmpeg(_project: Project, opts: { dir: string }):
     "-filter_complex", filterParts.join(";"),
     "-map", "[outv]",
     "-map", `${audioInputIndex}:a`,
-    "-c:v", "libx264", "-preset", "medium", "-crf", "20",
+    "-c:v", "libx264", "-preset", LOW_MEMORY ? "veryfast" : "medium", "-crf", LOW_MEMORY ? "23" : "20",
+    ...(LOW_MEMORY ? ["-threads", "2", "-x264-params", "rc-lookahead=10:ref=1:bframes=0"] : []),
     "-c:a", "aac", "-b:a", "192k",
     "-shortest",
     outPath
   );
 
   execFileSync(secrets.ffmpegPath, ffArgs, { stdio: ["ignore", "ignore", "inherit"] });
-  console.log(`Saved ${outPath} (${plan.length} segments, ${F > 0 ? `${F.toFixed(2)}s crossfades` : "hard cuts"})`);
+  if (LOW_MEMORY) rmSync(join(dir, "render-tmp"), { recursive: true, force: true });
+  console.log(`Saved ${outPath} (${plan.length} segments, ${F > 0 ? `${F.toFixed(2)}s crossfades` : "hard cuts"}${LOW_MEMORY ? `, low-memory ${W}p` : ""})`);
   return outPath;
 }

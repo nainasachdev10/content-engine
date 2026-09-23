@@ -60,7 +60,7 @@ export async function runCaptions(_project: Project, opts: { dir: string; burn: 
     [
       "-y",
       "-i", join(dir, "raw_video.mp4"),
-      "-vf", `subtitles='${escaped}':force_style='FontSize=24,Bold=1,Outline=3,Shadow=1,PrimaryColour=&H00FFFFFF,OutlineColour=&H00000000,MarginV=50'`,
+      "-vf", `subtitles='${escaped}':force_style='FontSize=${process.env.RENDER_LOW_MEMORY === "1" ? 18 : 24},Bold=1,Outline=3,Shadow=1,PrimaryColour=&H00FFFFFF,OutlineColour=&H00000000,MarginV=50'`,
       "-c:v", "libx264", "-preset", "medium", "-crf", "20",
       "-c:a", "copy",
       outPath,

@@ -8,6 +8,7 @@ import { createReadStream, readFileSync, writeFileSync, existsSync } from "node:
 import { join } from "node:path";
 import type { Project } from "../lib/project.js";
 import { secrets, requireSecrets } from "../lib/env.js";
+import { pruneVideoDir } from "../lib/prune.js";
 import { syncPipelineRow } from "../lib/notion.js";
 
 export async function runUpload(
@@ -67,6 +68,9 @@ export async function runUpload(
   state.topics.push({ topic: metadata.title, videoId, publishedAt: new Date().toISOString() });
   writeFileSync(project.stateFile, JSON.stringify(state, null, 2));
   console.log(`Recorded in ${project.stateFile}`);
+  // YouTube now holds the full-quality file; keep only a lean review copy on disk.
+  const { freedMb } = pruneVideoDir(dir, { shrinkFinal: true });
+  if (freedMb) console.log(`Cleaned up ${freedMb} MB of intermediates.`);
 
   // Mirror the publish into the client's Notion pipeline (no-op without Notion).
   await syncPipelineRow(project, {

@@ -48,6 +48,7 @@ import { runUpload } from "./modules/upload.js";
 import { runAuth } from "./modules/auth.js";
 import { runEdit, runRollback } from "./modules/edit.js";
 import { runMusic } from "./lib/music.js";
+import { pruneVideoDir } from "./lib/prune.js";
 import { notify, notifyStatus, registerTelegramChats } from "./lib/notify.js";
 import {
   appendRunLog,
@@ -82,6 +83,7 @@ function usage(): never {
   engine notion status <slug>
   engine job <teardown|ideas-audit|metrics> <slug>
   engine scheduler [--interval-min 5]
+  engine prune --dir <videoDir> [--shrink]   delete a video's intermediates (auto after publish/reject)
   engine push-keys                 generate VAPID keys for push notifications
   engine notify-test               send a test notification through every configured channel
   engine telegram-connect          register chats that messaged the Telegram bot`);
@@ -215,6 +217,10 @@ async function cmdRun(slug: string): Promise<void> {
     if (stop("visuals")) return finish("visuals complete");
 
     let renderer = project.config.video.renderer;
+    if (renderer === "hyperframes" && process.env.RENDER_LOW_MEMORY === "1") {
+      console.log("RENDER_LOW_MEMORY=1 → using the ffmpeg renderer at 720p (HyperFrames needs >1 GB RAM).");
+      renderer = "ffmpeg";
+    }
     await execStage("render", async () => {
       if (renderer === "hyperframes") {
         try {
@@ -768,6 +774,13 @@ async function main(): Promise<void> {
       return cmdJob(rest[0], rest[1]);
     case "scheduler":
       return cmdScheduler();
+    case "prune": {
+      const d = arg("dir");
+      if (!d) throw new Error("engine prune requires --dir <videoDir>");
+      const { freedMb } = pruneVideoDir(d, { shrinkFinal: flag("shrink") });
+      console.log(`Freed ${freedMb} MB in ${d}`);
+      return;
+    }
     case "push-keys":
       return cmdPushKeys();
     case "notify-test":

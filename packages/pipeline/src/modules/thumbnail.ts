@@ -43,7 +43,7 @@ export async function runThumbnail(
   const basePath = join(dir, "thumbnail_base.png");
   if (!existsSync(basePath)) {
     const prompt = `YouTube thumbnail image for a video about "${topic}". ${hint ? `Scene concept: ${hint}. ` : ""}${project.config.prompts.thumbnailStyle} No text or lettering anywhere in the image.`;
-    writeFileSync(basePath, await generateImageWithRetry(prompt));
+    writeFileSync(basePath, await generateImageWithRetry(prompt, 3, project.config.video.imageModel));
   }
 
   const outPath = join(dir, "thumbnail.png");

@@ -203,6 +203,8 @@ export default function SettingsForm({ slug, initial }: { slug: string; initial:
         <label>Clip model id (optional override)</label>
         <input value={c.video.clipModel ?? ""} onChange={(e) => set("video.clipModel", e.target.value || undefined)}
           placeholder={c.video.clipProvider === "higgsfield" ? "higgsfield-ai/dop/standard" : "kwaivgi/kling-v2.5-turbo-pro"} />
+        <label>Image model (Replicate id)</label>
+        <input value={c.video.imageModel ?? ""} onChange={(e) => set("video.imageModel", e.target.value || undefined)} placeholder="black-forest-labs/flux-1.1-pro (default) — or google/imagen-4, bytedance/seedream-4" />
         <label>Renderer</label>
         <select value={c.video.renderer} onChange={(e) => set("video.renderer", e.target.value)}>
           <option value="hyperframes">Animated word-by-word captions</option>

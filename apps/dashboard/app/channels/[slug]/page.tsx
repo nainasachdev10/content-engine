@@ -2,6 +2,7 @@ import { getProject, getRuns, latestResearch, notificationSetup } from "../../..
 import ChannelActions from "./channel-actions";
 import ConnectNotion from "./connect-notion";
 import SettingsForm from "./settings-form";
+import Restyle from "./restyle";
 
 export const dynamic = "force-dynamic";
 
@@ -105,6 +106,8 @@ export default async function ChannelPage({
           ))}
         </div>
       )}
+
+      <Restyle slug={slug} current={c.prompts.visualStyle} />
 
       <h2 id="settings">Settings</h2>
       <SettingsForm slug={slug} initial={c} />

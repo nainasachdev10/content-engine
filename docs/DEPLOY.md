@@ -83,6 +83,12 @@ because renders are bursty and it bills actual usage; on Render you need the Pro
 **Render**: Web Service from the repo (Docker), plan Pro (4 GB+), add a Disk mounted at
 `/app/storage`, same variables as above.
 
+**Testing on Railway's free trial (1 GB RAM)**: everything works except the HyperFrames
+render. Set `RENDER_LOW_MEMORY=1` and the engine renders with ffmpeg at 720p (classic
+captions), one scene at a time, which fits in under 1 GB — enough to test the whole flow
+end to end. Remove the variable after upgrading to Hobby (8 GB) to get 1080p animated
+captions. (The trial itself expires after 30 days / $5 of usage.)
+
 **Vercel is not suitable** for the dashboard: it reads the run database and streams
 video from local disk and spawns the engine as child processes, none of which serverless
 hosting allows. Keep the dashboard in the same container — it costs nothing extra.
@@ -139,8 +145,11 @@ git pull && docker compose up -d --build   # update
 ```
 - **Backups**: `projects/` (configs, secrets, videos) and `data/` (run DB) — rsync or
   snapshot nightly. Generated videos in `projects/*/output` can be pruned after publish.
-- **Disk**: each 5-minute video is ~150–400 MB of intermediates. 80 GB ≈ 150 videos;
-  prune old `output/` folders or move them to object storage.
+- **Disk**: after a video is published or rejected the engine deletes its intermediates and
+  re-encodes the kept copy to ~8 Mbps (≈ 150 MB → 15 MB for a 2-minute video). Videos
+  waiting in the review queue keep their full working set (~150–400 MB each), so on a
+  5 GB Railway Hobby volume don't let more than ~10 videos pile up unreviewed. Manual:
+  `engine prune --dir <videoDir> --shrink`.
 - **Failures** land on the client's Review page ("Needs attention") and in your logs;
   the scheduler retries transient failures once by itself.
 - **Costs to watch**: ElevenLabs characters (the pipeline caches narration per scene so
